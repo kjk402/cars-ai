@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+catboost
+pydantic
+pandas
+matplotlib
+torch
+scikit-learn
+joblib
+python-multipart
+seaborn
+statsmodels
+numpy
+kafka-python
