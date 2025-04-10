@@ -1,18 +1,19 @@
-import threading
+import base64
 import json
+import threading
+import time
+import uuid
+from io import BytesIO
+
+import joblib
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import seaborn as sns
 import torch
 import torch.nn as nn
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import base64
-import joblib
-from io import BytesIO
 from kafka import KafkaConsumer, KafkaProducer
-import uuid
-import time
-import matplotlib
 
 matplotlib.rcParams['font.family'] = 'NanumGothic'
 
@@ -41,6 +42,7 @@ class DeepCarPriceModel(nn.Module):
         x = torch.cat([x_num, x_cat_combined], dim=1)
         return self.model(x)
 
+
 model_path = "saved_models/deep_model.pth"
 scaler_path = "saved_models/scaler.pkl"
 encoders_path = "saved_models/label_encoders.pkl"
@@ -56,7 +58,6 @@ emb_dims = [min(50, (dim + 1) // 2) for dim in cat_dims]
 model = DeepCarPriceModel(num_numerical=3, cat_dims=cat_dims, emb_dims=emb_dims).to(device)
 model.load_state_dict(torch.load(model_path, map_location=device))
 model.eval()
-
 
 # Kafka 초기화
 producer = KafkaProducer(
@@ -89,7 +90,8 @@ def run_prediction_consumer():
                 df_input[col] = label_encoders[col].transform(df_input[col].astype(str))
 
             X_cat = torch.tensor(df_input[["fuelType", "brand", "model"]].values, dtype=torch.long).to(device)
-            X_num = torch.tensor(scaler.transform(df_input[["engineSize", "year", "mileage"]]), dtype=torch.float32).to(device)
+            X_num = torch.tensor(scaler.transform(df_input[["engineSize", "year", "mileage"]]), dtype=torch.float32).to(
+                device)
 
             with torch.no_grad():
                 log_pred = model(X_num, X_cat).item()
@@ -144,6 +146,7 @@ def run_health_check_consumer():
                 })
         except Exception as e:
             print("❌ Error in health check:", e)
+
 
 if __name__ == "__main__":
     threading.Thread(target=run_prediction_consumer, daemon=True).start()

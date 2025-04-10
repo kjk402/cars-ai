@@ -1,19 +1,20 @@
-import pandas as pd
-import torch
-import torch.nn as nn
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-import joblib
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import matplotlib.pyplot as plt
-import matplotlib
 import base64
 from io import BytesIO
-import seaborn as sns
+
+import joblib
+import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
-import os
+import pandas as pd
+import seaborn as sns
+import torch
+import torch.nn as nn
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 matplotlib.rcParams['font.family'] = 'NanumGothic'
+
 
 class CarFeatures(BaseModel):
     engineSize: float
@@ -23,9 +24,11 @@ class CarFeatures(BaseModel):
     brand: str
     model: str
 
+
 class PricePrediction(BaseModel):
     predicted_price: int
     image_base64: str
+
 
 class DeepCarPriceModel(nn.Module):
     def __init__(self, num_numerical, cat_dims, emb_dims):
@@ -50,6 +53,7 @@ class DeepCarPriceModel(nn.Module):
         x = torch.cat([x_num, x_cat_combined], dim=1)
         return self.model(x)
 
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("✅ Using device:", device)
 if device.type == "cuda":
@@ -71,6 +75,7 @@ model.load_state_dict(torch.load(model_path, map_location=device))
 model.eval()
 
 app = FastAPI()
+
 
 @app.post("/predict", response_model=PricePrediction)
 def predict_price(data: CarFeatures):
@@ -99,7 +104,7 @@ def predict_price(data: CarFeatures):
         (df_all["year"] == data.year) &
         (abs(df_all["engineSize"] - data.engineSize) <= tolerance) &
         (df_all["fuelType"] == data.fuelType)
-    ]
+        ]
 
     plt.figure(figsize=(8, 6))
     if not filtered.empty:

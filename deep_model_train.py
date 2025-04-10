@@ -1,11 +1,12 @@
+import os
+
+import joblib
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset, random_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-import joblib
-import os
-import numpy as np
+from torch.utils.data import DataLoader, TensorDataset, random_split
 
 csv_path = "/mnt/c/Users/joonk/csvs/uk_car.csv"
 
@@ -51,6 +52,7 @@ train_ds, val_ds = random_split(dataset, [train_size, val_size])
 train_loader = DataLoader(train_ds, batch_size=32, shuffle=True)
 val_loader = DataLoader(val_ds, batch_size=32)
 
+
 # 모델 정의
 class DeepCarPriceModel(nn.Module):
     def __init__(self, num_numerical, cat_dims, emb_dims):
@@ -74,6 +76,7 @@ class DeepCarPriceModel(nn.Module):
         x_cat_combined = torch.cat(x_cat_embs, dim=1)
         x = torch.cat([x_num, x_cat_combined], dim=1)
         return self.model(x)
+
 
 cat_dims = [len(label_encoders[col].classes_) for col in ["fuelType", "brand", "model"]]
 emb_dims = [min(50, (dim + 1) // 2) for dim in cat_dims]
@@ -100,7 +103,7 @@ for epoch in range(epochs):
         loss.backward()
         optimizer.step()
         train_loss += loss.item()
-    print(f"[{epoch+1}/{epochs}] Train Loss: {train_loss/len(train_loader):.4f}")
+    print(f"[{epoch + 1}/{epochs}] Train Loss: {train_loss / len(train_loader):.4f}")
 
 # 저장
 os.makedirs("saved_models", exist_ok=True)

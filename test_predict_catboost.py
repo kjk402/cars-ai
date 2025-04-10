@@ -1,6 +1,6 @@
-import pandas as pd
-import numpy as np
 import joblib
+import numpy as np
+import pandas as pd
 from catboost import CatBoostRegressor
 
 model_path = "saved_models/catboost_model.cbm"

@@ -1,8 +1,8 @@
+import joblib
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-import numpy as np
-import joblib
 
 input_data = {
     "engineSize": 3.0,
@@ -36,6 +36,7 @@ X_num_scaled = scaler.transform(pd.DataFrame(X_num, columns=["engineSize", "year
 X_cat_tensor = torch.tensor(X_cat, dtype=torch.long).to(device)
 X_num_tensor = torch.tensor(X_num_scaled, dtype=torch.float32).to(device)
 
+
 class DeepCarPriceModel(nn.Module):
     def __init__(self, num_numerical, cat_dims, emb_dims):
         super().__init__()
@@ -58,6 +59,7 @@ class DeepCarPriceModel(nn.Module):
         x_cat_combined = torch.cat(x_cat_embs, dim=1)
         x = torch.cat([x_num, x_cat_combined], dim=1)
         return self.model(x)
+
 
 cat_dims = [len(label_encoders[col].classes_) for col in ["fuelType", "brand", "model"]]
 emb_dims = [min(50, (dim + 1) // 2) for dim in cat_dims]

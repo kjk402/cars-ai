@@ -1,10 +1,11 @@
-import pandas as pd
+import os
+
+import joblib
 import numpy as np
+import pandas as pd
 from catboost import CatBoostRegressor, Pool
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-import joblib
-import os
 
 csv_path = "/mnt/c/Users/joonk/csvs/uk_car.csv"
 df = pd.read_csv(csv_path)

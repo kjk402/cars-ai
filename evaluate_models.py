@@ -1,13 +1,13 @@
-
 import os
 import time
+
+import joblib
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-import joblib
-from sklearn.metrics import mean_squared_error, mean_absolute_error
 from catboost import CatBoostRegressor
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 csv_path = "/mnt/c/Users/joonk/csvs/uk_car.csv"
 deep_model_path = "saved_models/deep_model.pth"
@@ -38,6 +38,7 @@ scaler = joblib.load("saved_models/scaler.pkl")
 X_num_scaled = scaler.transform(X[["engineSize", "year", "mileage"]])
 X_cat = X[["fuelType", "brand", "model"]].values
 
+
 # PyTorch 모델 정의
 class DeepCarPriceModel(nn.Module):
     def __init__(self, num_numerical, cat_dims, emb_dims):
@@ -61,6 +62,7 @@ class DeepCarPriceModel(nn.Module):
         x_cat_combined = torch.cat(x_cat_embs, dim=1)
         x = torch.cat([x_num, x_cat_combined], dim=1)
         return self.model(x)
+
 
 # 모델 및 예측
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -118,5 +120,5 @@ print(f"MAE: {mae_cat:.2f}")
 print(f"예측 시간: {catboost_time:.4f}초")
 
 print("\n📦 모델 크기")
-print(f"PyTorch 모델: {os.path.getsize(deep_model_path)/1024:.2f} KB")
-print(f"CatBoost 모델: {os.path.getsize(catboost_model_path)/1024:.2f} KB")
+print(f"PyTorch 모델: {os.path.getsize(deep_model_path) / 1024:.2f} KB")
+print(f"CatBoost 모델: {os.path.getsize(catboost_model_path) / 1024:.2f} KB")

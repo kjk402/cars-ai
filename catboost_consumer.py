@@ -1,17 +1,18 @@
-import threading
-import json
-import pandas as pd
-import numpy as np
 import base64
-import joblib
-from io import BytesIO
-from kafka import KafkaConsumer, KafkaProducer
-import uuid
+import json
+import threading
 import time
-import matplotlib.pyplot as plt
-import seaborn as sns
+import uuid
+from io import BytesIO
+
+import joblib
 import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
 from catboost import CatBoostRegressor
+from kafka import KafkaConsumer, KafkaProducer
 
 matplotlib.rcParams['font.family'] = 'NanumGothic'
 
@@ -26,15 +27,18 @@ label_encoders = joblib.load(encoders_path)
 model = CatBoostRegressor()
 model.load_model(model_path)
 
+
 def safe_label_transform(le, values):
     classes = set(le.classes_)
     return [le.transform([v])[0] if v in classes else 0 for v in values]
+
 
 # Kafka 초기화
 producer = KafkaProducer(
     bootstrap_servers=['kafka:9092'],
     value_serializer=lambda v: json.dumps(v).encode('utf-8')
 )
+
 
 def run_prediction_consumer():
     consumer = KafkaConsumer(
@@ -87,11 +91,12 @@ def run_prediction_consumer():
                 (df_all["year"] == data["year"]) &
                 (abs(df_all["engineSize"] - data["engineSize"]) <= tolerance) &
                 (df_all["fuelType"] == data["fuelType"])
-            ]
+                ]
 
             plt.figure(figsize=(8, 6))
             if not filtered.empty:
-                sns.regplot(x="mileage", y="price", data=filtered, scatter=False, lowess=True, color="blue", label="가격 추세")
+                sns.regplot(x="mileage", y="price", data=filtered, scatter=False, lowess=True, color="blue",
+                            label="가격 추세")
             plt.scatter(filtered["mileage"], filtered["price"], alpha=0.4, label="비슷한 차량", zorder=1)
             plt.scatter(data["mileage"], prediction, color="red", s=100, label="예측 차량", zorder=3)
             plt.plot([data["mileage"], data["mileage"]], [0, prediction], linestyle="--", color="red", zorder=2)
@@ -121,6 +126,7 @@ def run_prediction_consumer():
         except Exception as e:
             print("❌ Error handling CatBoost prediction message:", e)
 
+
 # 헬스체크
 def run_health_check_consumer():
     consumer = KafkaConsumer(
@@ -146,6 +152,7 @@ def run_health_check_consumer():
                 })
         except Exception as e:
             print("❌ Error in CatBoost health check:", e)
+
 
 if __name__ == "__main__":
     threading.Thread(target=run_prediction_consumer, daemon=True).start()
