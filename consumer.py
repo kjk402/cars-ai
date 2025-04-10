@@ -18,7 +18,7 @@ from kafka import KafkaConsumer, KafkaProducer
 matplotlib.rcParams['font.family'] = 'NanumGothic'
 
 
-# 모델 정의
+# 모델
 class DeepCarPriceModel(nn.Module):
     def __init__(self, num_numerical, cat_dims, emb_dims):
         super().__init__()
@@ -43,6 +43,7 @@ class DeepCarPriceModel(nn.Module):
         return self.model(x)
 
 
+# 파일 경로 및 모델 로딩
 model_path = "saved_models/deep_model.pth"
 scaler_path = "saved_models/scaler.pkl"
 encoders_path = "saved_models/label_encoders.pkl"
@@ -59,14 +60,12 @@ model = DeepCarPriceModel(num_numerical=3, cat_dims=cat_dims, emb_dims=emb_dims)
 model.load_state_dict(torch.load(model_path, map_location=device))
 model.eval()
 
-# Kafka 초기화
+# Kafka  초기화
 producer = KafkaProducer(
     bootstrap_servers=['kafka:9092'],
     value_serializer=lambda v: json.dumps(v).encode('utf-8')
 )
 
-
-# 예측 요청 처리
 def run_prediction_consumer():
     consumer = KafkaConsumer(
         'car-predict-request',
@@ -76,14 +75,12 @@ def run_prediction_consumer():
         auto_offset_reset='earliest',
         enable_auto_commit=True
     )
-    print("Prediction consumer is running...")
+    print("✅ Prediction consumer is running...")
 
     for message in consumer:
         try:
             data = message.value
             request_id = data.pop("request_id", None)
-            print(f"Received prediction request_id={request_id}")
-
             df_input = pd.DataFrame([data])
 
             for col in ["fuelType", "brand", "model"]:
@@ -97,12 +94,30 @@ def run_prediction_consumer():
                 log_pred = model(X_num, X_cat).item()
                 prediction = np.expm1(log_pred)
 
-            # 시각화 (간단한 placeholder)
+            df_all = pd.read_csv(csv_path)
+            df_all = df_all[df_all["fuelType"].notna() & df_all["price"].notna() & df_all["mileage"].notna()]
+            tolerance = 0.1
+            filtered = df_all[
+                (df_all["year"] == data["year"]) &
+                (abs(df_all["engineSize"] - data["engineSize"]) <= tolerance) &
+                (df_all["fuelType"] == data["fuelType"])
+                ]
+
+            plt.figure(figsize=(8, 6))
+            if not filtered.empty:
+                sns.regplot(x="mileage", y="price", data=filtered, scatter=False, lowess=True, color="blue",
+                            label="가격 추세")
+            plt.scatter(filtered["mileage"], filtered["price"], alpha=0.4, label="비슷한 차량", zorder=1)
+            plt.scatter(data["mileage"], prediction, color="red", s=100, label="예측 차량", zorder=3)
+            plt.plot([data["mileage"], data["mileage"]], [0, prediction], linestyle="--", color="red", zorder=2)
+
+            plt.xlabel("주행거리 (ml)")
+            plt.ylabel("price (£)")
+            plt.title(f"{data['brand'].upper()} {data['model']} {data['year']}년식 차량 가격 예측")
+            plt.legend()
+            plt.grid(True)
+
             buffer = BytesIO()
-            plt.figure()
-            plt.title("Price Prediction")
-            plt.bar(["Predicted Price"], [prediction])
-            plt.tight_layout()
             plt.savefig(buffer, format="jpeg", dpi=300)
             plt.close()
             buffer.seek(0)
@@ -115,13 +130,13 @@ def run_prediction_consumer():
             }
 
             producer.send('car-predict-response', value=response)
-            print(f"Sent prediction for request_id={request_id}")
+            print(f"✅ Sent prediction for request_id={request_id}")
 
         except Exception as e:
-            print("Error handling prediction message:", e)
+            print("❌ Error handling prediction message:", e)
 
 
-# 헬스체크
+# 헬스체크 요청
 def run_health_check_consumer():
     consumer = KafkaConsumer(
         'car-health-check-request',
@@ -148,6 +163,7 @@ def run_health_check_consumer():
             print("❌ Error in health check:", e)
 
 
+# 스레드로 두 consumer 실행
 if __name__ == "__main__":
     threading.Thread(target=run_prediction_consumer, daemon=True).start()
     threading.Thread(target=run_health_check_consumer, daemon=True).start()
