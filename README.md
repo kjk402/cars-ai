@@ -13,14 +13,16 @@ PyTorch와 CatBoost 두 가지 모델을 학습하여 성능을 비교한 후, �
 ---
 ## 구성 요약
 
-| 파일명 | 설명 |
-|--------|------|
-| `deep_model_train.py` | PyTorch 학습 코드 |
-| `catboost_model_train.py` | CatBoost 학습 코드 |
-| `test_predict_pytorch.py` | PyTorch 단일 예측 테스트 |
-| `test_predict_catboost.py` | CatBoost 단일 예측 테스트 |
-| `evaluate_models.py` | 전체 모델 성능 비교 |
-
+| 파일명 | 설명                                                                          |
+|--------|-----------------------------------------------------------------------------|
+| `deep_model_train.py` | PyTorch 학습 코드                                                               |
+| `catboost_model_train.py` | CatBoost 학습 코드                                                              |
+| `test_predict_pytorch.py` | PyTorch 단일 예측 테스트                                                           |
+| `test_predict_catboost.py` | CatBoost 단일 예측 테스트                                                          |
+| `evaluate_models.py` | 전체 모델 성능 비교 (RMSE, MSE, 소요 시간, 모델 크기)                                       |
+| `catboost_consumer.py` | **Kafka 기반 CatBoost 예측 컨슈머**. Kafka 메시지를 받아 CatBoost 모델로 가격을 예측하고 응답을 보냅니다. |
+| `consumer.py`          | **Kafka 기반 PyTorch 예측 컨슈머**. Kafka 메시지를 받아 PyTorch 모델로 가격을 예측하고 응답을 보냅니다.   |
+| `main.py`              | **FastAPI 기반 REST API 서버**. HTTP 요청을 통해 차량 가격 예측을 제공하는 엔드포인트를 구성합니다.        |
 ---
 ## 🛠 사용 패키지
 
@@ -83,10 +85,10 @@ python3 evaluate_models.py
 ### 평가 결과
 ![Image](https://github.com/user-attachments/assets/3d6a4d3f-f2d2-4c29-be74-b99f6430cea5)
 
-| 모델     | RMSE    | MAE     | 예측 시간 | 모델 크기     |
-|----------|---------|---------|------------|----------------|
-| PyTorch  | 2165.72 | 1484.00 | 0.1080초   | 104.60 KB      |
-| CatBoost | 2225.53 | 1482.25 | 0.0647초   | 837.84 KB      |
+| 모델     | RMSE    | MAE     | 예측 시간   | 모델 크기     |
+|----------|---------|---------|---------|----------------|
+| PyTorch  | 2106.73 | 1434.61 | 0.0946초 | 104.60 KB      |
+| CatBoost | 2225.53 | 1482.25 | 0.0647초 | 837.84 KB      |
 
 - **RMSE (Root Mean Squared Error)**: 예측값과 실제값의 차이를 제곱한 후 평균을 내고 제곱근을 씌운 값. 값이 작을수록 좋습니다.  
 - **MAE (Mean Absolute Error)**: 예측값과 실제값의 절대적인 차이의 평균입니다.  
@@ -96,11 +98,10 @@ python3 evaluate_models.py
 ---
 
 ## ✅ 최종 모델 선택: PyTorch
-
 CatBoost와 비교해 RMSE가 더 낮고,  
 **모델 크기가 작으며 GPU 가속이 가능**하기 때문에  
 PyTorch 모델을 **최종 선택**하여 서비스에 활용하기로 결정했습니다.
 
 ---
 
-© 2025 cars-ai 프로젝트
+© 2025 [cars 개인 프로젝트](https://cars.joon-develop.com/)
