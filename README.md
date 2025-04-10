@@ -119,9 +119,6 @@ PyTorch 모델을 **최종 선택**하여 서비스에 활용하기로 결정했
 
 ### 예시
 ![Image](https://github.com/user-attachments/assets/68603e3a-e512-480c-8fad-bf3598ba30d9)
-
-위 이미지는 `MERCEDES S Class 2015년식` 차량에 대한 예측 결과입니다.  
-비슷한 차량들의 분포와 함께 예측값을 보여줍니다.
 ---
 
 © 2025 [cars 개인 프로젝트](https://cars.joon-develop.com/)
